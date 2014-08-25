@@ -1,15 +1,13 @@
-list.files()    # Verify the existence of the archive
-Power <- read.table("household_power_consumption.txt", header = TRUE, sep = ";",quote = "", comment.char = "", na.strings = "?")    
-head(Power)
-dim(Power)
-powerfeb  <- subset(Power, Date == "1/2/2007" | Date == "2/2/2007")
-powerfeb
-Conctiempo <- paste(powerfeb$Date, powerfeb$Time)
-Newtime<- strptime(Conctiempo, "%d/%m/%Y %H:%M:%S")
-class(Newtime)
-NewPowerfeb <- cbind(Newtime,powerfeb)
-
-png("plot2.png", width = 480, height = 480)
-        plot(Newtime, NewPowerfeb$Global_active_power, type = "l", xlab = "", ylab = "Global Active Power (kilowatts)")
+library("plyr")
+# Load data
+NEI <- readRDS("summarySCC_PM25.rds")
+SCC <- readRDS("Source_Classification_Code.rds")
+data<-transform(NEI,year=factor(year))
+data2<-data[data$fips=="24510",]
+#Plot Data
+plotdata2<-ddply(data2,.(year),summarize,sum=sum(Emissions))
+png("plot2.png")
+plot(plotdata2$year,plotdata2$sum,type="n",xlab="year",ylab="total PM2.5 Emission",
+     main="PM2.5 emission in Baltimore City",boxwex=0.05)
+lines(plotdata2$year,plotdata2$sum)
 dev.off()
-

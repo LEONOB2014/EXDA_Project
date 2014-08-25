@@ -1,24 +1,17 @@
-list.files()    # Verify the existence of the archive
-Power <- read.table("household_power_consumption.txt", header = TRUE, sep = ";",quote = "", comment.char = "", na.strings = "?")    
-head(Power)
-dim(Power)
-powerfeb  <- subset(Power, Date == "1/2/2007" | Date == "2/2/2007")
-powerfeb
-Conctiempo <- paste(powerfeb$Date, powerfeb$Time)
-Newtime<- strptime(Conctiempo, "%d/%m/%Y %H:%M:%S")
-class(Newtime)
-NewPowerfeb <- cbind(Newtime,powerfeb)
-
-png("plot4.png", width = 480, height = 480)
-par(mfcol = c(2, 2))
-plot(Newtime, NewPowerfeb$Global_active_power, type = "l", xlab = "", ylab = "Global Active Power (kilowatts)")
-plot(Newtime, NewPowerfeb$Sub_metering_1, type = "l", xlab = "", ylab = "Energy Submetering")
-lines(Newtime, NewPowerfeb$Sub_metering_2, type ="l", col = "red")
-lines(Newtime, NewPowerfeb$Sub_metering_3, type ="l", col = "blue")
-legend("topright", legend = c("Sub_metering_1", "Sub_metering_2", "Sub_metering_3"), lty = 1, lwd = 2.5, col = c("black", "red", "blue"))
-plot(Newtime, NewPowerfeb$Voltage, type = "l", xlab = "datetime", ylab = "Voltage")
-plot(Newtime, NewPowerfeb$Global_reactive_power, type = "l", xlab = "datetime", ylab = "Glogal_reactive_power")
+library("plyr")
+library("ggplot2")
+# Load data
+NEI <- readRDS("summarySCC_PM25.rds")
+SCC <- readRDS("Source_Classification_Code.rds")
+data<-transform(NEI,type=factor(type),year=factor(year))
+data2<-data[data$fips=="24510",]
+vehicles<-as.data.frame(SCC[grep("vehicles",SCC$SCC.Level.Two,ignore.case=T),1])
+names(vehicles)<-"SCC"
+data3<-merge(vehicles,data2,by="SCC")
+#Plot Data
+plotdata<-ddply(data3,.(year),summarize,sum=sum(Emissions))
+png("plot5.png")
+gplot<-ggplot(plotdata,aes(year,sum))
+gplot+geom_point(size=4)+labs(title="PM2.5 Emission from motor vehicle sources in Baltimore City",
+                              y="Total PM2.5 emission each year")
 dev.off()
-
-
-Sys.setlocale(category = "LC_TIME", locale = "C")

@@ -1,19 +1,19 @@
-list.files()    # Verify the existence of the archive
-Power <- read.table("household_power_consumption.txt", header = TRUE, sep = ";",quote = "", comment.char = "", na.strings = "?")    
-head(Power)
-dim(Power)
-powerfeb  <- subset(Power, Date == "1/2/2007" | Date == "2/2/2007")
-powerfeb
-Conctiempo <- paste(powerfeb$Date, powerfeb$Time)
-Newtime<- strptime(Conctiempo, "%d/%m/%Y %H:%M:%S")
-class(Newtime)
-NewPowerfeb <- cbind(Newtime,powerfeb)
-
-png("plot3.png", width = 480, height = 480)
-        plot(Newtime, NewPowerfeb$Sub_metering_1, type = "l", xlab = "", ylab = "Energy Submetering")
-        lines(Newtime, NewPowerfeb$Sub_metering_2, type ="l", col = "red")
-        lines(Newtime, NewPowerfeb$Sub_metering_3, type ="l", col = "blue")
-        legend("topright", legend = c("Sub_metering_1", "Sub_metering_2", "Sub_metering_3"), lty = 1, lwd = 2.5, col = c("black", "red", "blue"))        
-
-dev.off(
-
+library("plyr")
+library("ggplot2")
+# Load data
+NEI <- readRDS("summarySCC_PM25.rds")
+SCC <- readRDS("Source_Classification_Code.rds")
+data<-transform(NEI,type=factor(type),year=factor(year))
+twocity<-data[data$fips=="24510"|data$fips=="06037",]
+vehicles<-as.data.frame(SCC[grep("vehicles",SCC$SCC.Level.Two,ignore.case=T),1])
+names(vehicles)<-"SCC"
+data2<-merge(vehicles,twocity,by="SCC")
+data2$city[data2$fips=="24510"]<-"Baltimore"
+data2$city[data2$fips=="06037"]<-"LA"
+#Plot Data
+plotdata<-ddply(data2,.(year,city),summarize,sum=sum(Emissions))
+png("plot6.png")
+gplot<-ggplot(plotdata,aes(year,sum))
+gplot+geom_point(aes(color=city),size=4)+labs(title="PM2.5 Emission from motor vehicle sources",
+                                              y="total PM2.5 emission each year")
+dev.off()
